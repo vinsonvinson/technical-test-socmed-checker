@@ -11,6 +11,12 @@ export default function Dashboard() {
     });
     const [isLoading, setIsLoading] = useState(false);
 
+    const [isRefreshing, setIsRefreshing] = useState({
+        youtube: false,
+        tiktok: false,
+        instagram: false,
+    });
+
     const [socialData, setSocialData] = useState<any>({
         youtube: null,
         tiktok: null,
@@ -65,6 +71,31 @@ export default function Dashboard() {
             return data;
         } catch (err) {
             return { error: "Gagal terhubung ke server Instagram" };
+        }
+    };
+
+    const handleRefresh = async (
+        platform: "youtube" | "tiktok" | "instagram",
+        username: string,
+    ) => {
+        if (!username) return;
+
+        setIsRefreshing((prev) => ({ ...prev, [platform]: true }));
+
+        try {
+            let res;
+            if (platform === "youtube") res = await fetchYouTube(username);
+            if (platform === "tiktok") res = await fetchTikTok(username);
+            if (platform === "instagram") res = await fetchInstagram(username);
+
+            setSocialData((prev: any) => ({
+                ...prev,
+                [platform]: res,
+            }));
+        } catch (error) {
+            console.error(`Gagal refresh ${platform}:`, error);
+        } finally {
+            setIsRefreshing((prev) => ({ ...prev, [platform]: false }));
         }
     };
 
@@ -169,14 +200,10 @@ export default function Dashboard() {
 
                         <button
                             type="submit"
-                            disabled={
-                                isLoading
-                            }
+                            disabled={isLoading}
                             className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:bg-blue-300 h-[50px]"
                         >
-                            {isLoading
-                                ? "Mencari..."
-                                : "Lacak Data"}
+                            {isLoading ? "Mencari..." : "Lacak Data"}
                         </button>
                     </form>
                 </section>
@@ -184,7 +211,7 @@ export default function Dashboard() {
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <SocialCard
                         platform="YouTube"
-                        isLoading={isLoading}
+                        isLoading={isLoading || isRefreshing.youtube}
                         accountName={socialData.youtube?.accountName || ""}
                         profilePicture={
                             socialData.youtube?.profilePicture || ""
@@ -193,28 +220,22 @@ export default function Dashboard() {
                         recentVideos={socialData.youtube?.recentVideos || []}
                         errorMessage={socialData.youtube?.error}
                         onRefresh={() =>
-                            fetchYouTube(inputs.youtube).then((res) =>
-                                setSocialData({ ...socialData, youtube: res }),
-                            )
+                            handleRefresh("youtube", inputs.youtube)
                         }
                     />
                     <SocialCard
                         platform="TikTok"
-                        isLoading={isLoading}
+                        isLoading={isLoading || isRefreshing.tiktok}
                         accountName={socialData.tiktok?.accountName || ""}
                         profilePicture={socialData.tiktok?.profilePicture || ""}
                         totalViews={socialData.tiktok?.totalViews || 0}
                         recentVideos={socialData.tiktok?.recentVideos || []}
                         errorMessage={socialData.tiktok?.error}
-                        onRefresh={() =>
-                            fetchTikTok(inputs.tiktok).then((res) =>
-                                setSocialData({ ...socialData, tiktok: res }),
-                            )
-                        }
+                        onRefresh={() => handleRefresh("tiktok", inputs.tiktok)}
                     />
                     <SocialCard
                         platform="Instagram"
-                        isLoading={isLoading}
+                        isLoading={isLoading || isRefreshing.instagram}
                         accountName={socialData.instagram?.accountName || ""}
                         profilePicture={
                             socialData.instagram?.profilePicture || ""
@@ -223,12 +244,7 @@ export default function Dashboard() {
                         recentVideos={socialData.instagram?.recentVideos || []}
                         errorMessage={socialData.instagram?.error}
                         onRefresh={() =>
-                            fetchInstagram(inputs.instagram).then((res) =>
-                                setSocialData({
-                                    ...socialData,
-                                    instagram: res,
-                                }),
-                            )
+                            handleRefresh("instagram", inputs.instagram)
                         }
                     />
                 </section>
