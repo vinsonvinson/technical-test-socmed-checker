@@ -1,65 +1,253 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+import { useState } from "react";
+import SocialCard, { VideoData } from "../components/SocialCard";
+
+export default function Dashboard() {
+    const [inputs, setInputs] = useState({
+        youtube: "",
+        tiktok: "",
+        instagram: "",
+    });
+    const [isLoading, setIsLoading] = useState({
+        youtube: false,
+        tiktok: false,
+        instagram: false,
+    });
+
+    const [socialData, setSocialData] = useState<any>({
+        youtube: null,
+        tiktok: null,
+        instagram: null,
+    });
+
+    const fetchYouTube = async (channelName: string) => {
+        if (!channelName) return null;
+        setIsLoading((prev) => ({ ...prev, youtube: true }));
+        try {
+            const res = await fetch(
+                `/api/youtube?channel=${encodeURIComponent(channelName)}`,
+            );
+            const data = await res.json();
+            if (!res.ok)
+                return {
+                    error: data.error || "Channel YouTube tidak ditemukan",
+                };
+            return data;
+        } catch (err) {
+            return { error: "Gagal terhubung ke server YouTube" };
+        } finally {
+            setIsLoading((prev) => ({ ...prev, youtube: false }));
+        }
+    };
+
+    const fetchTikTok = async (username: string) => {
+        if (!username) return null;
+        setIsLoading((prev) => ({ ...prev, tiktok: true }));
+        try {
+            const res = await fetch(
+                `/api/tiktok?username=${encodeURIComponent(username)}`,
+            );
+            const data = await res.json();
+            if (!res.ok)
+                return {
+                    error: data.error || "Username TikTok tidak ditemukan",
+                };
+            return data;
+        } catch (err) {
+            return { error: "Gagal terhubung ke server TikTok" };
+        } finally {
+            setIsLoading((prev) => ({ ...prev, tiktok: false }));
+        }
+    };
+
+    const fetchInstagram = async (username: string) => {
+        if (!username) return null;
+        setIsLoading((prev) => ({ ...prev, instagram: true }));
+        try {
+            const res = await fetch(
+                `/api/instagram?username=${encodeURIComponent(username)}`,
+            );
+            const data = await res.json();
+            if (!res.ok)
+                return {
+                    error: data.error || "Username Instagram tidak ditemukan",
+                };
+            return data;
+        } catch (err) {
+            return { error: "Gagal terhubung ke server Instagram" };
+        } finally {
+            setIsLoading((prev) => ({ ...prev, instagram: false }));
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        try {
+            const [ytData, tkData, igData] = await Promise.all([
+                fetchYouTube(inputs.youtube),
+                fetchTikTok(inputs.tiktok),
+                fetchInstagram(inputs.instagram),
+            ]);
+
+            setSocialData({
+                youtube: ytData,
+                tiktok: tkData,
+                instagram: igData,
+            });
+        } catch (error) {
+            console.error("Kesalahan sistem:", error);
+        }
+    };
+
+    return (
+        <main className="min-h-screen bg-gray-50 p-6 md:p-10 font-sans">
+            <div className="max-w-7xl mx-auto space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                        Technical Test - Vinson
+                    </h1>
+                </div>
+
+                <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="flex flex-col md:flex-row gap-4 items-end"
+                    >
+                        <div className="flex-1 w-full space-y-2">
+                            <label
+                                htmlFor="youtube"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                YouTube Channel
+                            </label>
+                            <input
+                                id="youtube"
+                                type="text"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none transition text-black"
+                                value={inputs.youtube}
+                                onChange={(e) =>
+                                    setInputs({
+                                        ...inputs,
+                                        youtube: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <div className="flex-1 w-full space-y-2">
+                            <label
+                                htmlFor="tiktok"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                TikTok Username
+                            </label>
+                            <input
+                                id="tiktok"
+                                type="text"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none transition text-black"
+                                value={inputs.tiktok}
+                                onChange={(e) =>
+                                    setInputs({
+                                        ...inputs,
+                                        tiktok: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <div className="flex-1 w-full space-y-2">
+                            <label
+                                htmlFor="instagram"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                Instagram Username
+                            </label>
+                            <input
+                                id="instagram"
+                                type="text"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none transition text-black"
+                                value={inputs.instagram}
+                                onChange={(e) =>
+                                    setInputs({
+                                        ...inputs,
+                                        instagram: e.target.value,
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={
+                                isLoading.youtube ||
+                                isLoading.tiktok ||
+                                isLoading.instagram
+                            }
+                            className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:bg-blue-300 h-[50px]"
+                        >
+                            {isLoading.youtube ||
+                            isLoading.tiktok ||
+                            isLoading.instagram
+                                ? "Mencari..."
+                                : "Lacak Data"}
+                        </button>
+                    </form>
+                </section>
+
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <SocialCard
+                        platform="YouTube"
+                        isLoading={isLoading.youtube}
+                        accountName={socialData.youtube?.accountName || ""}
+                        profilePicture={
+                            socialData.youtube?.profilePicture || ""
+                        }
+                        totalViews={socialData.youtube?.totalViews || 0}
+                        recentVideos={socialData.youtube?.recentVideos || []}
+                        errorMessage={socialData.youtube?.error}
+                        onRefresh={() =>
+                            fetchYouTube(inputs.youtube).then((res) =>
+                                setSocialData({ ...socialData, youtube: res }),
+                            )
+                        }
+                    />
+                    <SocialCard
+                        platform="TikTok"
+                        isLoading={isLoading.tiktok}
+                        accountName={socialData.tiktok?.accountName || ""}
+                        profilePicture={socialData.tiktok?.profilePicture || ""}
+                        totalViews={socialData.tiktok?.totalViews || 0}
+                        recentVideos={socialData.tiktok?.recentVideos || []}
+                        errorMessage={socialData.tiktok?.error}
+                        onRefresh={() =>
+                            fetchTikTok(inputs.tiktok).then((res) =>
+                                setSocialData({ ...socialData, tiktok: res }),
+                            )
+                        }
+                    />
+                    <SocialCard
+                        platform="Instagram"
+                        isLoading={isLoading.instagram}
+                        accountName={socialData.instagram?.accountName || ""}
+                        profilePicture={
+                            socialData.instagram?.profilePicture || ""
+                        }
+                        totalViews={socialData.instagram?.totalViews || 0}
+                        recentVideos={socialData.instagram?.recentVideos || []}
+                        errorMessage={socialData.instagram?.error}
+                        onRefresh={() =>
+                            fetchInstagram(inputs.instagram).then((res) =>
+                                setSocialData({
+                                    ...socialData,
+                                    instagram: res,
+                                }),
+                            )
+                        }
+                    />
+                </section>
+            </div>
+        </main>
+    );
 }
