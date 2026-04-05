@@ -9,11 +9,7 @@ export default function Dashboard() {
         tiktok: "",
         instagram: "",
     });
-    const [isLoading, setIsLoading] = useState({
-        youtube: false,
-        tiktok: false,
-        instagram: false,
-    });
+    const [isLoading, setIsLoading] = useState(false);
 
     const [socialData, setSocialData] = useState<any>({
         youtube: null,
@@ -23,7 +19,6 @@ export default function Dashboard() {
 
     const fetchYouTube = async (channelName: string) => {
         if (!channelName) return null;
-        setIsLoading((prev) => ({ ...prev, youtube: true }));
         try {
             const res = await fetch(
                 `/api/youtube?channel=${encodeURIComponent(channelName)}`,
@@ -36,14 +31,11 @@ export default function Dashboard() {
             return data;
         } catch (err) {
             return { error: "Gagal terhubung ke server YouTube" };
-        } finally {
-            setIsLoading((prev) => ({ ...prev, youtube: false }));
         }
     };
 
     const fetchTikTok = async (username: string) => {
         if (!username) return null;
-        setIsLoading((prev) => ({ ...prev, tiktok: true }));
         try {
             const res = await fetch(
                 `/api/tiktok?username=${encodeURIComponent(username)}`,
@@ -56,14 +48,11 @@ export default function Dashboard() {
             return data;
         } catch (err) {
             return { error: "Gagal terhubung ke server TikTok" };
-        } finally {
-            setIsLoading((prev) => ({ ...prev, tiktok: false }));
         }
     };
 
     const fetchInstagram = async (username: string) => {
         if (!username) return null;
-        setIsLoading((prev) => ({ ...prev, instagram: true }));
         try {
             const res = await fetch(
                 `/api/instagram?username=${encodeURIComponent(username)}`,
@@ -76,14 +65,12 @@ export default function Dashboard() {
             return data;
         } catch (err) {
             return { error: "Gagal terhubung ke server Instagram" };
-        } finally {
-            setIsLoading((prev) => ({ ...prev, instagram: false }));
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setIsLoading(true);
         try {
             const [ytData, tkData, igData] = await Promise.all([
                 fetchYouTube(inputs.youtube),
@@ -98,6 +85,8 @@ export default function Dashboard() {
             });
         } catch (error) {
             console.error("Kesalahan sistem:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -181,15 +170,11 @@ export default function Dashboard() {
                         <button
                             type="submit"
                             disabled={
-                                isLoading.youtube ||
-                                isLoading.tiktok ||
-                                isLoading.instagram
+                                isLoading
                             }
                             className="w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:bg-blue-300 h-[50px]"
                         >
-                            {isLoading.youtube ||
-                            isLoading.tiktok ||
-                            isLoading.instagram
+                            {isLoading
                                 ? "Mencari..."
                                 : "Lacak Data"}
                         </button>
@@ -199,7 +184,7 @@ export default function Dashboard() {
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <SocialCard
                         platform="YouTube"
-                        isLoading={isLoading.youtube}
+                        isLoading={isLoading}
                         accountName={socialData.youtube?.accountName || ""}
                         profilePicture={
                             socialData.youtube?.profilePicture || ""
@@ -215,7 +200,7 @@ export default function Dashboard() {
                     />
                     <SocialCard
                         platform="TikTok"
-                        isLoading={isLoading.tiktok}
+                        isLoading={isLoading}
                         accountName={socialData.tiktok?.accountName || ""}
                         profilePicture={socialData.tiktok?.profilePicture || ""}
                         totalViews={socialData.tiktok?.totalViews || 0}
@@ -229,7 +214,7 @@ export default function Dashboard() {
                     />
                     <SocialCard
                         platform="Instagram"
-                        isLoading={isLoading.instagram}
+                        isLoading={isLoading}
                         accountName={socialData.instagram?.accountName || ""}
                         profilePicture={
                             socialData.instagram?.profilePicture || ""
