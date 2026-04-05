@@ -83,7 +83,7 @@ export default function Dashboard() {
         setIsRefreshing((prev) => ({ ...prev, [platform]: true }));
 
         try {
-            let res;
+            let res: any;
             if (platform === "youtube") res = await fetchYouTube(username);
             if (platform === "tiktok") res = await fetchTikTok(username);
             if (platform === "instagram") res = await fetchInstagram(username);
